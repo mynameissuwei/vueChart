@@ -117,5 +117,20 @@
       "vue-cli-service lint",
       "git add"
     ]
+  },
+  "description": "<p align=\"center\">\r   <a href=\"https://github.com/rcyj-FED/vue3-composition-admin-docs\" target=\"_blank\">\r     <img width=\"180\" src=\"https://github.com/rcyj-FED/vue3-composition-admin-docs/blob/main/docs/.vuepress/public/icons/android-chrome-192x192.png\" alt=\"logo\">\r   </a>\r </p>",
+  "main": ".eslintrc.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RainManGO/vue3-composition-admin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RainManGO/vue3-composition-admin/issues"
   }
 }

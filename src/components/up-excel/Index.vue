@@ -5,7 +5,7 @@
       type="file"
       accept=".xlsx, .xls"
       @change="handleClick"
-    >
+    />
     <div
       class="drop"
       @drop="handleDrop"
@@ -27,10 +27,9 @@
 </template>
 
 <script lang="ts">
-
-import { ElMessage } from 'element-plus'
-import { reactive, defineComponent, toRefs } from 'vue'
-import XLSX from 'xlsx'
+import { ElMessage } from "element-plus";
+import { reactive, defineComponent, toRefs } from "vue";
+import XLSX from "xlsx";
 export default defineComponent({
   props: {
     // eslint-disable-next-line vue/require-default-prop
@@ -47,101 +46,121 @@ export default defineComponent({
       loading: false,
       excelData: {
         header: null,
-        results: null
+        results: null,
+        sheetName: null
       },
-      generateData: (header: any, results: any) => {
-        dataMap.excelData.header = header
-        dataMap.excelData.results = results
-        props.onSuccess && props.onSuccess(dataMap.excelData)
+      generateData: (header: any, results: any, sheetName: any) => {
+        dataMap.excelData.header = header;
+        dataMap.excelData.results = results;
+        dataMap.excelData.sheetName = sheetName;
+        props.onSuccess && props.onSuccess(dataMap.excelData);
       },
       isExcel: (file: File) => /\.(xlsx|xls|csv)$/.test(file.name),
       upload: (rawFile: File) => {
-        (document.querySelector('.inputNode') as HTMLInputElement).value = ''
+        (document.querySelector(".inputNode") as HTMLInputElement).value = "";
         if (!props.beforeUpload) {
-          dataMap.readerData(rawFile)
-          return
+          dataMap.readerData(rawFile);
+          return;
         }
-        const before = props.beforeUpload(rawFile)
+        const before = props.beforeUpload(rawFile);
         if (before) {
-          dataMap.readerData(rawFile)
+          dataMap.readerData(rawFile);
         }
       },
       handleDrop: (e: DragEvent) => {
-        e.stopPropagation()
-        e.preventDefault()
-        if (dataMap.loading) return
-        if (!e.dataTransfer) return
-        const files = e.dataTransfer.files
+        e.stopPropagation();
+        e.preventDefault();
+        if (dataMap.loading) return;
+        if (!e.dataTransfer) return;
+        const files = e.dataTransfer.files;
         if (files.length !== 1) {
-          ElMessage.error('Only support uploading one file!')
-          return
+          ElMessage.error("Only support uploading one file!");
+          return;
         }
-        const rawFile = files[0] // only use files[0]
+        const rawFile = files[0]; // only use files[0]
 
         if (dataMap.isExcel(rawFile)) {
-          ElMessage.error('Only supports upload .xlsx, .xls, .csv suffix files')
-          return false
+          ElMessage.error(
+            "Only supports upload .xlsx, .xls, .csv suffix files"
+          );
+          return false;
         }
-        dataMap.upload(rawFile)
-        e.stopPropagation()
-        e.preventDefault()
+        dataMap.upload(rawFile);
+        e.stopPropagation();
+        e.preventDefault();
       },
       handleDragover: (e: DragEvent) => {
-        e.stopPropagation()
-        e.preventDefault()
+        e.stopPropagation();
+        e.preventDefault();
         if (e.dataTransfer) {
-          e.dataTransfer.dropEffect = 'copy'
+          e.dataTransfer.dropEffect = "copy";
         }
       },
       handleUpload: () => {
-        (document.querySelector('.inputNode') as HTMLInputElement).click()
+        (document.querySelector(".inputNode") as HTMLInputElement).click();
       },
-      getHeaderRow: (sheet: { [key: string ]: any }) => {
-        const headers: string[] = []
-        const range = XLSX.utils.decode_range(sheet['!ref'])
-        const R = range.s.r
+      getHeaderRow: (sheet: { [key: string]: any }) => {
+        const headers: string[] = [];
+        const range = XLSX.utils.decode_range(sheet["!ref"]);
+        const R = range.s.r;
         // start in the first row
-        for (let C = range.s.c; C <= range.e.c; ++C) { // walk every column in the range
-          const cell = sheet[XLSX.utils.encode_cell({ c: C, r: R })]
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          // walk every column in the range
+          const cell = sheet[XLSX.utils.encode_cell({ c: C, r: R })];
           // find the cell in the first row
-          let hdr = ''
-          if (cell && cell.t) hdr = XLSX.utils.format_cell(cell)
-          if (hdr === '') {
-            hdr = 'UNKNOWN ' + C // replace with your desired default
+          let hdr = "";
+          if (cell && cell.t) hdr = XLSX.utils.format_cell(cell);
+          if (hdr === "") {
+            hdr = "UNKNOWN " + C; // replace with your desired default
           }
-          headers.push(hdr)
+          headers.push(hdr);
         }
-        return headers
+        return headers;
       },
       readerData: (rawFile: File) => {
-        dataMap.loading = true
-        const reader = new FileReader()
+        dataMap.loading = true;
+        const reader = new FileReader();
         reader.onload = e => {
-          debugger
-          const data = (e.target as FileReader).result
-          const workbook = XLSX.read(data, { type: 'array' })
-          const firstSheetName = workbook.SheetNames[0]
-          const worksheet = workbook.Sheets[firstSheetName]
-          const header = dataMap.getHeaderRow(worksheet)
-          const results = XLSX.utils.sheet_to_json(worksheet)
-          dataMap.generateData(header, results)
-          dataMap.loading = false
-        }
-        reader.readAsArrayBuffer(rawFile)
+          const data = (e.target as FileReader).result;
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheetName = workbook.SheetNames[0];
+          let bond_object = {};
+          const bond_data = workbook.SheetNames.forEach((item: string) => {
+            const worksheet = workbook.Sheets[item];
+            const results = XLSX.utils.sheet_to_json(worksheet);
+            const cb = results.map((item: any) => {
+              return {
+                link:
+                  `https://xueqiu.com/S/${
+                    item.bond_id.startsWith("11") ? "SH" : "SZ"
+                  }` + item.bond_id,
+                ...item
+              };
+            });
+            bond_object[item] = cb;
+          });
+          const worksheet = workbook.Sheets[firstSheetName];
+          const header = dataMap.getHeaderRow(worksheet);
+          const results = XLSX.utils.sheet_to_json(worksheet);
+          header[0] = "link";
+          console.log(bond_object, "bond_object");
+          dataMap.generateData(header, bond_object, workbook.SheetNames);
+          dataMap.loading = false;
+        };
+        reader.readAsArrayBuffer(rawFile);
       },
       handleClick: (e: MouseEvent) => {
-        const files = (e.target as HTMLInputElement).files
+        const files = (e.target as HTMLInputElement).files;
         if (files) {
-          const rawFile = files[0] // only use files[0]
-          dataMap.upload(rawFile)
+          const rawFile = files[0]; // only use files[0]
+          dataMap.upload(rawFile);
         }
       }
+    });
 
-    })
-
-    return { ...toRefs(dataMap) }
+    return { ...toRefs(dataMap) };
   }
-})
+});
 </script>
 
 <style lang="scss" scoped>
